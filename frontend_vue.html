@@ -1052,34 +1052,88 @@
               <span class="material-icons">menu_book</span> Oferta Académica
             </div>
             <div class="stats-grid">
-              <div class="stat-card primary">
-                <div class="top">
-                  <div><div class="value">{{ fmtNum(datos.length) }}</div><div class="label">Total Programas</div></div>
-                  <div class="icon-wrap"><span class="material-icons">menu_book</span></div>
+              <!-- Tarjeta 1: Total Programas -->
+              <div class="stat-card primary" :class="{'is-flipped': tarjetasVolteadas['oferta_programas']}" @click="toggleFlip('oferta_programas')">
+                <div class="stat-card-inner">
+                  <div class="stat-card-front">
+                    <div class="top">
+                      <div><div class="value">{{ fmtNum(datos.length) }}</div><div class="label">Total Programas</div></div>
+                      <div class="icon-wrap"><span class="material-icons">menu_book</span></div>
+                    </div>
+                  </div>
+                  <div class="stat-card-back" style="padding: 1rem;">
+                    <div style="height: 100%; width:100%; position:relative; display:flex; align-items:center;">
+                      <canvas id="sparkline-ofertaProgramas" style="max-height: 100px; width: 100%;"></canvas>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="stat-card info">
-                <div class="top">
-                  <div><div class="value">{{ countByNivel('Pregrado') }}</div><div class="label">Pregrado</div></div>
-                  <div class="icon-wrap"><span class="material-icons">school</span></div>
+              
+              <!-- Tarjeta 2: Pregrado -->
+              <div class="stat-card info" :class="{'is-flipped': tarjetasVolteadas['oferta_pregrado']}" @click="toggleFlip('oferta_pregrado')">
+                <div class="stat-card-inner">
+                  <div class="stat-card-front">
+                    <div class="top">
+                      <div><div class="value">{{ countByNivel('Pregrado') }}</div><div class="label">Pregrado</div></div>
+                      <div class="icon-wrap"><span class="material-icons">school</span></div>
+                    </div>
+                  </div>
+                  <div class="stat-card-back" style="padding: 1rem;">
+                    <div style="height: 100%; width:100%; position:relative; display:flex; align-items:center;">
+                      <canvas id="sparkline-ofertaPregrado" style="max-height: 100px; width: 100%;"></canvas>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="stat-card purple">
-                <div class="top">
-                  <div><div class="value">{{ countByNivel('Postgrado') }}</div><div class="label">Postgrado</div></div>
-                  <div class="icon-wrap"><span class="material-icons">workspace_premium</span></div>
+              
+              <!-- Tarjeta 3: Postgrado -->
+              <div class="stat-card purple" :class="{'is-flipped': tarjetasVolteadas['oferta_postgrado']}" @click="toggleFlip('oferta_postgrado')">
+                <div class="stat-card-inner">
+                  <div class="stat-card-front">
+                    <div class="top">
+                      <div><div class="value">{{ countByNivel('Postgrado') }}</div><div class="label">Postgrado</div></div>
+                      <div class="icon-wrap"><span class="material-icons">workspace_premium</span></div>
+                    </div>
+                  </div>
+                  <div class="stat-card-back" style="padding: 1rem;">
+                    <div style="height: 100%; width:100%; position:relative; display:flex; align-items:center;">
+                      <canvas id="sparkline-ofertaPostgrado" style="max-height: 100px; width: 100%;"></canvas>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="stat-card success">
-                <div class="top">
-                  <div><div class="value">{{ fmtNum(totalVacantes) }}</div><div class="label">Vacantes Totales</div></div>
-                  <div class="icon-wrap"><span class="material-icons">event_seat</span></div>
+              
+              <!-- Tarjeta 4: Vacantes Totales -->
+              <div class="stat-card success" :class="{'is-flipped': tarjetasVolteadas['oferta_vacantes']}" @click="toggleFlip('oferta_vacantes')">
+                <div class="stat-card-inner">
+                  <div class="stat-card-front">
+                    <div class="top">
+                      <div><div class="value">{{ fmtNum(totalVacantes) }}</div><div class="label">Vacantes Totales</div></div>
+                      <div class="icon-wrap"><span class="material-icons">event_seat</span></div>
+                    </div>
+                  </div>
+                  <div class="stat-card-back" style="padding: 1rem;">
+                    <div style="height: 100%; width:100%; position:relative; display:flex; align-items:center;">
+                      <canvas id="sparkline-ofertaVacantes" style="max-height: 100px; width: 100%;"></canvas>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="stat-card warning">
-                <div class="top">
-                  <div><div class="value">{{ fmtPesos(arancelPromedio) }}</div><div class="label">Arancel Prom.</div></div>
-                  <div class="icon-wrap"><span class="material-icons">payments</span></div>
+              
+              <!-- Tarjeta 5: Arancel Prom. -->
+              <div class="stat-card warning" :class="{'is-flipped': tarjetasVolteadas['oferta_arancel']}" @click="toggleFlip('oferta_arancel')">
+                <div class="stat-card-inner">
+                  <div class="stat-card-front">
+                    <div class="top">
+                      <div><div class="value">{{ fmtPesos(arancelPromedio) }}</div><div class="label">Arancel Prom.</div></div>
+                      <div class="icon-wrap"><span class="material-icons">payments</span></div>
+                    </div>
+                  </div>
+                  <div class="stat-card-back" style="padding: 1rem;">
+                    <div style="height: 100%; width:100%; position:relative; display:flex; align-items:center;">
+                      <canvas id="sparkline-ofertaArancel" style="max-height: 100px; width: 100%;"></canvas>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1524,15 +1578,17 @@
           let color = '#0077b6';
 
           // Asignar datos históricos del sparkline según la tarjeta
-          if (id === 'carreras' || id === 'unicas' || id === 'vacantes' || id === 'arancel') {
+          if (id === 'carreras' || id === 'unicas' || id === 'vacantes' || id === 'arancel' || id === 'ofertaProgramas' || id === 'ofertaVacantes' || id === 'ofertaArancel') {
             const hist = historicoOferta.value;
             labels = hist.map(h => h.anio);
-            color = id === 'carreras' ? '#0077b6' : id === 'unicas' ? '#00b4d8' : id === 'vacantes' ? '#ffb703' : '#9c27b0';
+            color = (id === 'carreras' || id === 'ofertaProgramas') ? '#0077b6' : 
+                    id === 'unicas' ? '#00b4d8' : 
+                    (id === 'vacantes' || id === 'ofertaVacantes') ? '#ffb703' : '#9c27b0';
             
-            if (id === 'carreras') dataPoints = hist.map(h => h.total_programas);
+            if (id === 'carreras' || id === 'ofertaProgramas') dataPoints = hist.map(h => h.total_programas);
             if (id === 'unicas') dataPoints = hist.map(h => h.carreras_unicas);
-            if (id === 'vacantes') dataPoints = hist.map(h => h.total_vacantes);
-            if (id === 'arancel') dataPoints = hist.map(h => h.arancel_promedio);
+            if (id === 'vacantes' || id === 'ofertaVacantes') dataPoints = hist.map(h => h.total_vacantes);
+            if (id === 'arancel' || id === 'ofertaArancel') dataPoints = hist.map(h => h.arancel_promedio);
           } else if (id.startsWith('mat')) {
             const hist = historicoMatricula.value;
             labels = hist.map(h => h.anio);
