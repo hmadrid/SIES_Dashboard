@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+<div id="app">
+  <h1>{{ msg }}</h1>
+  <p v-if="loaded">Vue funciona: {{ count }} items</p>
+</div>
+<script>
+try{
+Vue.createApp({
+  data(){return{msg:'Hola desde Vue',loaded:false,count:0}},
+  mounted(){
+    this.loaded=true;
+    this.count=42;
+  }
+}).mount('#app');
+}catch(e){
+  document.body.innerHTML+='<p style="color:red">ERROR: '+e.message+'</p>';
+}
+</script>
+</body>
+</html>

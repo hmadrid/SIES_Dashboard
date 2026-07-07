@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard SIES — Google Apps Script</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --text: #1a1a2e;
+      --accent: #2563eb;
+      --border: #e2e8f0;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #1e3a5f, #2563eb);
+      color: white;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header p { opacity: 0.85; margin-top: 0.25rem; font-size: 0.9rem; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+    /* Barra de herramientas */
+    .toolbar {
+      display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;
+      margin-bottom: 1.25rem;
+    }
+    .toolbar input, .toolbar select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      background: var(--card);
+      transition: border-color 0.2s;
+    }
+    .toolbar input:focus, .toolbar select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    .toolbar input { flex: 1; min-width: 200px; }
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none; border-radius: var(--radius);
+      font-size: 0.875rem; font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-outline {
+      background: var(--card); color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    .btn-outline:hover { background: #eff6ff; }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--card);
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--accent);
+    }
+    .stat-card .label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .value { font-size: 1.5rem; font-weight: 700; margin-top: 0.25rem; }
+
+    /* Tabla */
+    .table-wrapper {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    thead { background: #f8fafc; }
+    th {
+      text-align: left; padding: 0.75rem 1rem;
+      font-weight: 600; color: #475569;
+      border-bottom: 2px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    th:hover { color: var(--accent); }
+    th .arrow { margin-left: 0.25rem; opacity: 0.4; }
+    th.sorted .arrow { opacity: 1; }
+    td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); }
+    tr:hover td { background: #f1f5f9; }
+
+    /* Estados */
+    .status { padding: 0.75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
+    .status.error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+    .status.loading { background: #eff6ff; color: var(--accent); border: 1px solid #bfdbfe; }
+    .status.info { background: #f0fdf4; color: var(--success); border: 1px solid #bbf7d0; }
+
+    .pagination {
+      display: flex; gap: 0.5rem; align-items: center; justify-content: center;
+      padding: 1rem;
+    }
+    .pagination span { font-size: 0.875rem; color: #64748b; }
+
+    .footer {
+      text-align: center; padding: 1.5rem;
+      font-size: 0.8rem; color: #94a3b8;
+    }
+
+    @media (max-width: 600px) {
+      .header { padding: 1rem; }
+      .header h1 { font-size: 1.2rem; }
+      .toolbar { flex-direction: column; }
+      .toolbar input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📊 Dashboard SIES</h1>
+    <p>Datos desde Google Sheets vía Apps Script — <span id="api-label">Cargando...</span></p>
+  </div>
+
+  <div class="container">
+    <!-- Configuración API -->
+    <div class="toolbar">
+      <input type="text" id="apiUrl" placeholder="URL de la API (script.google.com/macros/.../exec)"
+             style="font-family: monospace; font-size: 0.8rem;">
+      <button class="btn btn-primary" onclick="cargarDatos()">🔄 Conectar</button>
+      <button class="btn btn-outline" onclick="guardarUrl()">💾 Guardar URL</button>
+    </div>
+
+    <!-- Estado -->
+    <div id="status"></div>
+
+    <!-- Stats -->
+    <div class="stats" id="stats" style="display:none;"></div>
+
+    <!-- Filtros -->
+    <div class="toolbar" id="filtros-toolbar" style="display:none;">
+      <input type="text" id="searchInput" placeholder="🔍 Buscar en todos los campos..."
+             oninput="filtrar()">
+      <button class="btn btn-outline" onclick="cargarDatos()">Limpiar filtros</button>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-wrapper" id="table-wrapper" style="display:none;">
+      <table>
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="pagination">
+        <span id="pageInfo"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    🆓 100% gratis con Google Apps Script + Google Sheets · Sin servidores, sin costo
+  </div>
+
+  <script>
+    var todosLosDatos = [];
+    var sortColumn = null;
+    var sortAsc = true;
+
+    // Recuperar URL guardada
+    (function() {
+      var saved = localStorage.getItem("gsApiUrl");
+      if (saved) {
+        document.getElementById("apiUrl").value = saved;
+        document.getElementById("api-label").textContent = "URL guardada ✓";
+      }
+    })();
+
+    function guardarUrl() {
+      var url = document.getElementById("apiUrl").value.trim();
+      if (!url) return alert("Ingresá la URL de la API primero");
+      localStorage.setItem("gsApiUrl", url);
+      document.getElementById("api-label").textContent = "URL guardada ✓";
+      mostrarStatus("URL guardada en el navegador", "info");
+    }
+
+    function mostrarStatus(msg, tipo) {
+      var el = document.getElementById("status");
+      el.className = "status " + tipo;
+      el.textContent = msg;
+      setTimeout(function() { el.textContent = ""; el.className = ""; }, 5000);
+    }
+
+    async function cargarDatos() {
+      var url = document.getElementById("apiUrl").value.trim();
+      if (!url) {
+        var saved = localStorage.getItem("gsApiUrl");
+        if (!saved) {
+          mostrarStatus("⚠️ Pegá la URL de tu Apps Script desplegado arriba", "error");
+          return;
+        }
+        url = saved;
+        document.getElementById("apiUrl").value = saved;
+      }
+
+      mostrarStatus("⏳ Cargando datos desde Google Sheets...", "loading");
+
+      try {
+        var resp = await fetch(url);
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        todosLosDatos = await resp.json();
+
+        if (todosLosDatos.error) throw new Error(todosLosDatos.error);
+
+        document.getElementById("api-label").textContent =
+          "✓ Conectado · " + todosLosDatos.length + " registros";
+
+        renderStats();
+        renderTabla(todosLosDatos);
+        mostrarStatus("✅ " + todosLosDatos.length + " registros cargados", "info");
+
+        document.getElementById("stats").style.display = "grid";
+        document.getElementById("filtros-toolbar").style.display = "flex";
+        document.getElementById("table-wrapper").style.display = "block";
+      } catch (err) {
+        mostrarStatus("❌ Error: " + err.message + " — ¿La URL es correcta? ¿Está desplegada como 'Cualquiera'?", "error");
+        console.error(err);
+      }
+    }
+
+    function renderStats() {
+      var total = todosLosDatos.length;
+      var columnas = todosLosDatos.length > 0 ? Object.keys(todosLosDatos[0]).length : 0;
+      document.getElementById("stats").innerHTML = [
+        { label: "Registros", value: total },
+        { label: "Columnas", value: columnas },
+        { label: "Fuente", value: "Google Sheets" },
+        { label: "Costo", value: "$0" }
+      ].map(function(s) {
+        return '<div class="stat-card"><div class="label">' + s.label + '</div><div class="value">' + s.value + '</div></div>';
+      }).join("");
+    }
+
+    function renderTabla(data) {
+      if (data.length === 0) {
+        document.getElementById("thead").innerHTML = "";
+        document.getElementById("tbody").innerHTML =
+          '<tr><td colspan="100" style="text-align:center;padding:2rem;color:#94a3b8;">Sin datos</td></tr>';
+        document.getElementById("pageInfo").textContent = "";
+        return;
+      }
+
+      var columnas = Object.keys(data[0]);
+
+      // Headers con sort
+      var self = this;
+      document.getElementById("thead").innerHTML = "<tr>" + columnas.map(function(col) {
+        return '<th onclick="ordenarPor(\'' + col + '\')">' + col + ' <span class="arrow">' +
+               (sortColumn === col ? (sortAsc ? "▲" : "▼") : "⇅") + '</span></th>';
+      }).join("") + "</tr>";
+
+      // Body (máx 500 filas para no trabar el navegador)
+      var mostrar = data.slice(0, 500);
+      document.getElementById("tbody").innerHTML = mostrar.map(function(row) {
+        return "<tr>" + columnas.map(function(col) {
+          var val = row[col] !== undefined && row[col] !== null ? row[col] : "";
+          return "<td>" + String(val) + "</td>";
+        }).join("") + "</tr>";
+      }).join("");
+
+      var info = "Mostrando " + mostrar.length + " de " + data.length + " registros";
+      if (data.length > 500) info += " (limitado a 500 en pantalla)";
+      document.getElementById("pageInfo").textContent = info;
+    }
+
+    function ordenarPor(columna) {
+      if (sortColumn === columna) {
+        sortAsc = !sortAsc;
+      } else {
+        sortColumn = columna;
+        sortAsc = true;
+      }
+      var datos = filtrarDataset();
+      datos.sort(function(a, b) {
+        var va = (a[columna] || "").toString().toLowerCase();
+        var vb = (b[columna] || "").toString().toLowerCase();
+        // Intento numérico
+        var na = parseFloat(va), nb = parseFloat(vb);
+        if (!isNaN(na) && !isNaN(nb)) { va = na; vb = nb; }
+        return va < vb ? (sortAsc ? -1 : 1) : va > vb ? (sortAsc ? 1 : -1) : 0;
+      });
+      renderTabla(datos);
+    }
+
+    function filtrarDataset() {
+      var search = document.getElementById("searchInput").value.toLowerCase().trim();
+      if (!search) return todosLosDatos;
+      return todosLosDatos.filter(function(row) {
+        return Object.values(row).some(function(val) {
+          return String(val).toLowerCase().indexOf(search) !== -1;
+        });
+      });
+    }
+
+    function filtrar() {
+      renderTabla(filtrarDataset());
+    }
+  </script>
+</body>
+</html>

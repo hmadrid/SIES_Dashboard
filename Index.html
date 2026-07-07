@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<title>Oferta Academica UA — SIES</title>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--p:#1d4ed8;--pl:#dbeafe;--border:#e2e8f0;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{background:linear-gradient(135deg,#0f172a,#1e3a5f 60%,#1d4ed8);color:#fff;padding:1.25rem 2rem}
+.header h1{font-size:1.35rem;font-weight:700}
+.header .sub{font-size:.82rem;opacity:.75;margin-top:.25rem}
+.container{max-width:1400px;margin:0 auto;padding:1.25rem 1.5rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin-bottom:1.25rem}
+.stat-card{background:var(--card);padding:1rem 1.25rem;border-radius:var(--radius);box-shadow:var(--shadow);border-left:4px solid var(--p)}
+.stat-card .label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.stat-card .value{font-size:1.6rem;font-weight:700;margin-top:.15rem}
+.stat-card .sub{font-size:.68rem;color:var(--muted);margin-top:.2rem}
+.filters{background:var(--card);padding:.85rem 1.15rem;border-radius:var(--radius);box-shadow:var(--shadow);display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;margin-bottom:1.25rem}
+.filters select,.filters input{padding:.45rem .7rem;border:1px solid var(--border);border-radius:8px;font-size:.82rem;background:var(--card);color:var(--text);min-width:130px}
+.filters input{flex:1;min-width:180px;max-width:320px}
+.filters select:focus-visible,.filters input:focus-visible{outline:none;border-color:var(--p);box-shadow:0 0 0 3px var(--pl)}
+.btn{padding:.45rem 1rem;border:none;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer}
+.btn-p{background:var(--p);color:#fff}.btn-p:hover{background:#1e40af}
+.btn-o{background:var(--card);color:var(--p);border:1.5px solid var(--p)}.btn-o:hover{background:var(--pl)}
+.btn-sm{padding:.3rem .65rem;font-size:.72rem}
+.charts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem}
+@media(max-width:1100px){.charts-row{grid-template-columns:1fr 1fr}}@media(max-width:700px){.charts-row{grid-template-columns:1fr}}
+.chart-card{background:var(--card);padding:1rem 1.25rem;border-radius:var(--radius);box-shadow:var(--shadow)}
+.chart-card h3{font-size:.85rem;font-weight:600;margin-bottom:.75rem}
+.chart-card canvas{max-height:280px}
+.table-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.table-header{display:flex;justify-content:space-between;align-items:center;padding:.85rem 1.25rem;border-bottom:1px solid var(--border)}
+.table-header h3{font-size:.85rem;font-weight:600}
+.table-wrapper{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead{background:#f8fafc}
+th{text-align:left;padding:.6rem .85rem;font-weight:600;color:var(--muted);border-bottom:2px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;font-size:.73rem;text-transform:uppercase}
+th:hover{color:var(--p)}
+th .si{opacity:.3;margin-left:.2rem}th.sorted .si{opacity:1}
+td{padding:.5rem .85rem;border-bottom:1px solid var(--border);white-space:nowrap}
+tr:hover td{background:#f1f5f9}
+.pag{display:flex;gap:.5rem;align-items:center;justify-content:center;padding:.75rem;font-size:.8rem;color:var(--muted)}
+.status{padding:.65rem 1rem;border-radius:var(--radius);margin-bottom:1rem;font-size:.82rem}
+.status.loading{background:var(--pl);color:var(--p)}
+.status.error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.status.success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.footer{text-align:center;padding:1.5rem;font-size:.75rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="app">
+<header class="header">
+<h1>Oferta Academica UA <span style="font-size:.7rem;background:rgba(255,255,255,.15);padding:.2rem .6rem;border-radius:100px">SIES 2010-2025</span></h1>
+<p class="sub">Universidad Autonoma de Chile — v48 limpio</p>
+</header>
+<div class="container">
+<div v-if="status" class="status" :class="status.type">{{ status.msg }}</div>
+
+<div class="stats">
+<div class="stat-card" style="border-left-color:#2563eb;background:linear-gradient(135deg,#eff6ff,#dbeafe)">
+<div class="label">Registros</div>
+<div class="value" style="color:#1d4ed8">{{ fmt(datos.length) }}</div>
+<div class="sub">Oferta academica</div>
+</div>
+<div class="stat-card" style="border-left-color:#7c3aed;background:linear-gradient(135deg,#f5f3ff,#ede9fe)">
+<div class="label">Carreras</div>
+<div class="value" style="color:#6d28d9">{{ carrerasU }}</div>
+<div class="sub">Programas unicos</div>
+</div>
+<div class="stat-card" style="border-left-color:#059669;background:linear-gradient(135deg,#ecfdf5,#d1fae5)">
+<div class="label">Instituciones</div>
+<div class="value" style="color:#047857">{{ iesU }}</div>
+<div class="sub">En Chile</div>
+</div>
+<div class="stat-card" style="border-left-color:#d97706;background:linear-gradient(135deg,#fffbeb,#fef3c7)">
+<div class="label">Vacantes</div>
+<div class="value" style="color:#b45309">{{ fmt(totalVac) }}</div>
+<div class="sub">Totales ofertadas</div>
+</div>
+<div class="stat-card" style="border-left-color:#dc2626;background:linear-gradient(135deg,#fef2f2,#fee2e2)">
+<div class="label">Arancel Prom.</div>
+<div class="value" style="color:#b91c1c">{{ pesos(arancelProm) }}</div>
+<div class="sub">Promedio anual</div>
+</div>
+</div>
+
+<div class="filters">
+<select v-model="fAnio"><option value="">Todos los anos</option><option v-for="a in anios" :value="a">{{ a }}</option></select>
+<select v-model="fIES"><option value="">Todos</option><option v-for="i in iesLista" :value="i">{{ i }}</option></select>
+<select v-model="fTipo"><option value="">Todos los tipos</option><option v-for="t in tiposLista" :value="t">{{ t }}</option></select>
+<select v-model="fNivel"><option value="">Todos los niveles</option><option v-for="n in niveles" :value="n">{{ n }}</option></select>
+<select v-model="fVig"><option value="">Todas</option><option value="Vigente con estudiantes nuevos">Con nuevos</option><option value="Vigente sin estudiantes nuevos">Sin nuevos</option></select>
+<input v-model="q" placeholder="Buscar carrera...">
+<button class="btn btn-o btn-sm" @click="reset">Limpiar</button>
+</div>
+
+<div class="charts-row">
+<div class="chart-card"><h3>Top 10 Areas Genericas (Vacantes)</h3><div style="height:280px"><canvas ref="c1"></canvas></div></div>
+<div class="chart-card"><h3>Vacantes Totales por Ano</h3><div style="height:280px"><canvas ref="c2"></canvas></div></div>
+<div class="chart-card"><h3>Arancel Promedio por Ano</h3><div style="height:280px"><canvas ref="c3"></canvas></div></div>
+</div>
+
+<div class="table-card">
+<div class="table-header"><h3>{{ filtrados.length }} de {{ datos.length }} registros</h3><span style="font-size:.72rem;color:var(--muted)">Click en columna = ordenar</span></div>
+<div class="table-wrapper">
+<table>
+<thead><tr>
+<th v-for="col in cols" :class="{sorted:sc===col}" @click="sort(col)">{{ col }}<span class="si">{{ sc===col?(sa?'▲':'▼'):'⇅' }}</span></th>
+</tr></thead>
+<tbody>
+<tr v-for="(r,i) in paginados"><td v-for="col in cols">{{ ['Arancel Anual','Matricula Anual'].includes(col) ? pesos(r[col]) : r[col] }}</td></tr>
+<tr v-if="!paginados.length"><td :colspan="cols.length" style="text-align:center;padding:2rem;color:var(--muted)">Sin resultados</td></tr>
+</tbody>
+</table>
+</div>
+<div class="pag">
+<button class="btn btn-o btn-sm" @click="pg--" :disabled="pg<=1">←</button>
+<span>Pag {{ pg }}/{{ totPg }} ({{ filtrados.length }})</span>
+<button class="btn btn-o btn-sm" @click="pg++" :disabled="pg>=totPg">→</button>
+</div>
+</div>
+</div>
+<div class="footer">Google Apps Script + Vue CDN · Datos SIES Mineduc Chile</div>
+</div>
+<script>
+var colsVis=['Año','Nombre IES','Área Carrera Genérica','Nombre Carrera','Grado Académico','Nivel Global','Modalidad','Jornada','Vacantes Semestre Uno','Arancel Anual','Ponderación Lenguaje','Ponderación Matemáticas','Ponderación Ciencias','Ponderación Historia','Acreditación Carrera o Programa','Vigencia'];
+var PP=25;
+
+try{
+Vue.createApp({
+data:function(){return{
+datos:[],status:null,q:'',fAnio:'',fIES:'',fTipo:'',fNivel:'',fVig:'',sc:'',sa:true,pg:1,cols:colsVis,
+c1:null,c2:null,c3:null,_c1:null,_c2:null,_c3:null
+}},
+computed:{
+filtrados:function(){
+var d=this.datos;
+if(this.fAnio)d=d.filter(function(r){return r['Año']==this.fAnio}.bind(this));
+if(this.fIES)d=d.filter(function(r){return r['Nombre IES']===this.fIES}.bind(this));
+if(this.fTipo)d=d.filter(function(r){return r['Tipo Institución 1']===this.fTipo}.bind(this));
+if(this.fNivel)d=d.filter(function(r){return r['Nivel Global']===this.fNivel}.bind(this));
+if(this.fVig)d=d.filter(function(r){return r['Vigencia']===this.fVig}.bind(this));
+if(this.q.trim()){var q=this.q.toLowerCase();d=d.filter(function(r){return r['Nombre Carrera']&&r['Nombre Carrera'].toLowerCase().indexOf(q)>=0})}
+if(this.sc){d=[].concat(d).sort(function(a,b){var va=(a[this.sc]||'').toString().toLowerCase(),vb=(b[this.sc]||'').toString().toLowerCase();var na=parseFloat(va),nb=parseFloat(vb);var ca=isNaN(na)?va:na,cb=isNaN(nb)?vb:nb;return ca<cb?(this.sa?-1:1):ca>cb?(this.sa?1:-1):0}.bind(this))}
+return d;
+},
+paginados:function(){var s=(this.pg-1)*PP;return this.filtrados.slice(s,s+PP)},
+totPg:function(){return Math.max(1,Math.ceil(this.filtrados.length/PP))},
+anios:function(){return Array.from(new Set(this.datos.map(function(r){return r['Año']}).filter(Boolean))).sort(function(a,b){return b-a})},
+iesLista:function(){return Array.from(new Set(this.datos.map(function(r){return r['Nombre IES']}).filter(Boolean))).sort()},
+tiposLista:function(){return Array.from(new Set(this.datos.map(function(r){return r['Tipo Institución 1']}).filter(Boolean))).sort()},
+niveles:function(){return Array.from(new Set(this.datos.map(function(r){return r['Nivel Global']}).filter(Boolean))).sort()},
+iesU:function(){return new Set(this.filtrados.map(function(r){return r['Nombre IES']}).filter(Boolean)).size},
+carrerasU:function(){return new Set(this.filtrados.map(function(r){return r['Nombre Carrera']}).filter(Boolean)).size},
+totalVac:function(){return this.filtrados.reduce(function(s,r){return s+(parseInt(r['Vacantes Semestre Uno'])||0)},0)},
+arancelProm:function(){var a=this.filtrados.map(function(r){return parseInt(r['Arancel Anual'])||0}).filter(function(v){return v>0});return a.length?Math.round(a.reduce(function(x,y){return x+y},0)/a.length):0}
+},
+methods:{
+fmt:function(n){return n?n.toLocaleString('es-CL'):'0'},
+pesos:function(n){n=parseInt(n);if(!n||n<=0)return'—';return n>=1e6?'$'+(n/1e6).toFixed(1)+'M':'$'+n.toLocaleString('es-CL')},
+sort:function(col){if(this.sc===col)this.sa=!this.sa;else{this.sc=col;this.sa=true}this.pg=1},
+reset:function(){this.q='';this.fAnio='';this.fIES='';this.fTipo='';this.fNivel='';this.fVig='';this.sc='';this.pg=1},
+charts:function(){
+var df=this.filtrados;if(!df.length)return;
+var ag={};df.forEach(function(r){var a=r['Área Carrera Genérica']||'Sin area';var v=parseInt(r['Vacantes Semestre Uno'])||0;ag[a]=(ag[a]||0)+v});
+var top=Object.entries(ag).sort(function(a,b){return b[1]-a[1]}).slice(0,10);
+if(this._c1)this._c1.destroy();
+this._c1=new Chart(this.$refs.c1,{type:'bar',data:{labels:top.map(function(t){return t[0]}),datasets:[{label:'Vacantes',data:top.map(function(t){return t[1]}),backgroundColor:['#1d4ed8','#2563eb','#3b82f6','#60a5fa','#93c5fd','#818cf8','#6366f1','#4f46e5','#4338ca','#3730a3'],borderRadius:6}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}}});
+var va={};df.forEach(function(r){var a=r['Año'],v=parseInt(r['Vacantes Semestre Uno'])||0;va[a]=(va[a]||0)+v});
+var val=Object.keys(va).sort(),vad=val.map(function(a){return va[a]});
+if(this._c2)this._c2.destroy();
+this._c2=new Chart(this.$refs.c2,{type:'line',data:{labels:val,datasets:[{label:'Vacantes',data:vad,borderColor:'#1d4ed8',backgroundColor:'rgba(29,78,216,.1)',fill:true,tension:.3,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{tooltip:{callbacks:{label:function(ctx){return ctx.raw.toLocaleString()+' vacantes'}}}},scales:{y:{ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}});
+var aa={};df.forEach(function(r){var a=r['Año'],ar=parseInt(r['Arancel Anual'])||0;if(a&&ar>0){if(!aa[a])aa[a]={s:0,c:0};aa[a].s+=ar;aa[a].c++}});
+var al=Object.keys(aa).sort(),ap=al.map(function(a){return Math.round(aa[a].s/aa[a].c)});
+if(this._c3)this._c3.destroy();
+this._c3=new Chart(this.$refs.c3,{type:'line',data:{labels:al,datasets:[{label:'Arancel prom.',data:ap,borderColor:'#16a34a',backgroundColor:'rgba(22,163,74,.1)',fill:true,tension:.3,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{tooltip:{callbacks:{label:function(ctx){return '$'+(ctx.raw/1e6).toFixed(1)+'M'}}}},scales:{y:{ticks:{callback:function(v){return (v/1e6).toFixed(1)+'M'},font:{size:11}}},x:{ticks:{font:{size:10}}}}}});
+}
+},
+watch:{
+filtrados:function(){this.pg=1;var self=this;this.$nextTick(function(){self.charts()})}
+},
+mounted:function(){
+var self=this;
+this.status={type:'loading',msg:'Cargando datos...'};
+google.script.run
+.withSuccessHandler(function(d){
+if(!Array.isArray(d)){self.status={type:'error',msg:'Error: formato invalido'};return}
+if(!d.length){self.status={type:'error',msg:'Sin datos'};return}
+self.datos=d;
+self.status={type:'success',msg:'OK: '+d.length+' registros'};
+self.$nextTick(function(){self.charts()});
+})
+.withFailureHandler(function(e){
+self.status={type:'error',msg:'Error: '+e.message};
+})
+.getDataForDashboard(null);
+}
+}).mount('#app');
+}catch(e){
+document.body.innerHTML+='<div style="background:red;color:#fff;padding:8px;font-size:13px">ERROR: '+e.message+'</div>';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "google_app_script",
+  "version": "1.0.0",
+  "description": "Dashboard web interactivo con datos del Sistema de Información de Educación Superior (SIES) de Chile. 100% gratuito.",
+  "main": "api.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/clasp": "^3.3.0",
+    "clasp": "^1.0.0"
+  }
+}

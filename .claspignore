@@ -1,0 +1,17 @@
+/**/*.py
+**/*.csv
+**/*.xlsx
+**/*.js
+node_modules/**
+functions/**
+data_clean/**
+.insforge/**
+upload_to_insforge.py
+consolidar_matricula.py
+consolidar_todas.py
+README.md
+AGENTS.md
+package.json
+package-lock.json
+pickle
+!appsscript.json
