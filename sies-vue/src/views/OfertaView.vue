@@ -162,27 +162,18 @@ function updateCharts() {
 </template>
 
 <style scoped>
-.section-title { font-size:1.1rem; font-weight:500; margin-bottom:1.25rem; display:flex; align-items:center; gap:0.75rem }
-.section-title .material-icons { color:var(--primary) }
 .ies-tabs { display:flex; gap:0.5rem; margin-bottom:1.5rem; border-bottom:2px solid #e2e8f0 }
 .ies-tab { padding:0.5rem 1.25rem; font-size:0.875rem; font-weight:500; color:var(--text-secondary); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all 0.2s; border-radius:4px 4px 0 0 }
 .ies-tab:hover { color:var(--primary); background:var(--accent-light) }
 .ies-tab.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600 }
-.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1.25rem; margin-bottom:1.5rem }
-.stat-card { background:var(--card-bg); border-radius:16px; padding:1.5rem 1.75rem; box-shadow:0 4px 20px rgba(0,119,182,.15),0 2px 8px rgba(0,0,0,.08); border:1px solid rgba(0,119,182,.08); display:flex; flex-direction:column; justify-content:center; position:relative; overflow:hidden; transition:all 0.3s }
-.stat-card .top { display:flex; justify-content:space-between; align-items:flex-start }
-.stat-card .value { font-size:1.6rem; font-weight:700; color:var(--text-primary) }
-.stat-card .label { font-size:0.78rem; color:var(--text-secondary); margin-top:0.2rem; font-weight:500 }
-.icon-wrap { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:var(--accent-light); color:var(--primary) }
-.stat-card .icon-wrap .material-icons { font-size:22px }
 .filters-bar { background:var(--card-bg); border-radius:12px; padding:1.25rem 1.5rem; box-shadow:0 1px 3px rgba(0,0,0,.06); display:flex; gap:1rem; flex-wrap:wrap; align-items:center; margin-bottom:1.5rem }
 .filters-bar select, .filters-bar input { padding:0.6rem 1rem; border:1px solid #e0e0e0; border-radius:8px; font-size:0.85rem; background:#fff }
 .charts-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1.5rem; margin-bottom:1.5rem }
-.chart-card { background:var(--card-bg); border-radius:12px; padding:1.5rem; box-shadow:var(--shadow) }
+.chart-card { background:var(--card-bg); border-radius:12px; padding:1.5rem; box-shadow:0 4px 20px rgba(0,119,182,.15) }
 .chart-card .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem }
 .chart-card h3 { font-size:1rem; font-weight:500 }
 .chart-card canvas { max-height:280px }
-.table-card { background:var(--card-bg); border-radius:12px; box-shadow:var(--shadow); overflow:hidden }
+.table-card { background:var(--card-bg); border-radius:12px; box-shadow:0 4px 20px rgba(0,119,182,.15); overflow:hidden }
 .table-card .header { padding:1.25rem 1.5rem; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center }
 .table-card h3 { font-size:1rem; font-weight:500 }
 .table-card .count { font-size:0.8rem; color:var(--text-secondary); background:#f5f5f5; padding:0.3rem 0.8rem; border-radius:20px }
@@ -197,8 +188,4 @@ td { padding:0.85rem 1.25rem; border-bottom:1px solid #f5f5f5; font-size:0.875re
 .btn-outline { background:transparent; border:1px solid #ddd; color:var(--text-secondary) }
 .btn-outline:hover { border-color:var(--primary); color:var(--primary) }
 .btn-outline:disabled { opacity:0.5; cursor:not-allowed }
-.status { padding:0.85rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-size:0.85rem; display:flex; align-items:center; gap:0.75rem }
-.status.loading { background:rgba(0,180,216,.1); color:var(--primary) }
-.status.error { background:rgba(239,68,68,.1); color:var(--red) }
-.status.success { background:rgba(16,185,129,.1); color:var(--green) }
 </style>
