@@ -52,6 +52,11 @@
       flex-direction: column;
       z-index: 100;
       box-shadow: 4px 0 20px rgba(0,0,0,.3);
+      transition: transform 0.3s ease;
+    }
+    
+    .sidebar.colapsado {
+      transform: translateX(-100%);
     }
     .sidebar-header {
       padding: 1.5rem;
@@ -110,7 +115,17 @@
     }
 
     /* Main */
-    .main { margin-left: 260px; flex: 1; }
+    .main { 
+      margin-left: 260px; 
+      flex: 1; 
+      transition: margin-left 0.3s ease;
+      min-width: 0;
+      overflow-x: hidden;
+    }
+    
+    .main.full-width {
+      margin-left: 0;
+    }
 
     /* Top navbar */
     .topbar {
@@ -139,12 +154,45 @@
     /* Content */
     .content { padding: 1.5rem 2rem; }
 
+    /* Tabs de tipo IES */
+    .ies-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--border-color, #e2e8f0);
+      padding-bottom: 0;
+    }
+    .ies-tab {
+      padding: 0.5rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+      border-radius: 4px 4px 0 0;
+      white-space: nowrap;
+    }
+    .ies-tab:hover { color: var(--primary); background: var(--accent-light); }
+    .ies-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
     /* Stats cards */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 1.25rem;
       margin-bottom: 1.5rem;
+    }
+    @media (max-width: 1200px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
     /* Stats cards con efecto 3D Flip */
     .stat-card {
@@ -154,6 +202,9 @@
       height: 150px;
       border: none;
       position: relative;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
     }
     .stat-card-inner {
       position: relative;
@@ -780,7 +831,7 @@
   <div id="app">
     <div class="layout">
       <!-- Sidebar -->
-      <aside class="sidebar">
+      <aside class="sidebar" :class="{ 'colapsado': !isSidebarOpen }">
         <div class="sidebar-header">
           <div class="logo">
             <span class="material-icons" style="font-size:32px;">school</span>
@@ -815,13 +866,18 @@
       </aside>
 
       <!-- Main -->
-      <main class="main">
+      <main class="main" :class="{ 'full-width': !isSidebarOpen }">
         <!-- Topbar -->
         <div class="topbar">
-          <h1>{{ seccionTitulo }}</h1>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <button @click="isSidebarOpen = !isSidebarOpen" style="background: none; border: none; cursor: pointer; color: var(--text-primary); display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: background 0.2s;">
+              <span class="material-icons">menu</span>
+            </button>
+            <h1>{{ seccionTitulo }}</h1>
+          </div>
           <div class="topbar-right">
             <span class="date">{{ fechaActual }}</span>
-            <span class="badge">SIES 2010-2025</span>
+            <span class="badge">SIES 2010-2026</span>
           </div>
         </div>
 
@@ -1051,13 +1107,28 @@
             <div class="section-title">
               <span class="material-icons">menu_book</span> Oferta Académica
             </div>
+            <!-- Tabs tipo institución -->
+            <div class="ies-tabs">
+              <div class="ies-tab" :class="{active: filtroTipoIES === 'Universidades'}" @click="filtroTipoIES = 'Universidades'; pagina = 1; cargarDatosAPI()">
+                <span class="material-icons" style="font-size:16px; vertical-align:middle; margin-right:4px;">account_balance</span>Universidades
+              </div>
+              <div class="ies-tab" :class="{active: filtroTipoIES === 'Institutos Profesionales'}" @click="filtroTipoIES = 'Institutos Profesionales'; pagina = 1; cargarDatosAPI()">
+                <span class="material-icons" style="font-size:16px; vertical-align:middle; margin-right:4px;">business</span>Institutos
+              </div>
+              <div class="ies-tab" :class="{active: filtroTipoIES === 'Centros de Formación Técnica'}" @click="filtroTipoIES = 'Centros de Formación Técnica'; pagina = 1; cargarDatosAPI()">
+                <span class="material-icons" style="font-size:16px; vertical-align:middle; margin-right:4px;">construction</span>CFT
+              </div>
+              <div class="ies-tab" :class="{active: filtroTipoIES === ''}" @click="filtroTipoIES = ''; pagina = 1; cargarDatosAPI()">
+                <span class="material-icons" style="font-size:16px; vertical-align:middle; margin-right:4px;">public</span>Todos
+              </div>
+            </div>
             <div class="stats-grid">
               <!-- Tarjeta 1: Total Programas -->
-              <div class="stat-card primary" :class="{'is-flipped': tarjetasVolteadas['oferta_programas']}" @click="toggleFlip('oferta_programas')">
+              <div class="stat-card primary" :class="{'is-flipped': tarjetasVolteadas['ofertaProgramas']}" @click="toggleFlip('ofertaProgramas')">
                 <div class="stat-card-inner">
                   <div class="stat-card-front">
                     <div class="top">
-                      <div><div class="value">{{ fmtNum(datos.length) }}</div><div class="label">Total Programas</div></div>
+                      <div><div class="value">{{ fmtNum(totalCarreras) }}</div><div class="label">Total Programas</div></div>
                       <div class="icon-wrap"><span class="material-icons">menu_book</span></div>
                     </div>
                   </div>
@@ -1070,11 +1141,11 @@
               </div>
               
               <!-- Tarjeta 2: Pregrado -->
-              <div class="stat-card info" :class="{'is-flipped': tarjetasVolteadas['oferta_pregrado']}" @click="toggleFlip('oferta_pregrado')">
+              <div class="stat-card info" :class="{'is-flipped': tarjetasVolteadas['ofertaPregrado']}" @click="toggleFlip('ofertaPregrado')">
                 <div class="stat-card-inner">
                   <div class="stat-card-front">
                     <div class="top">
-                      <div><div class="value">{{ countByNivel('Pregrado') }}</div><div class="label">Pregrado</div></div>
+                      <div><div class="value">{{ fmtNum(carrerasPregrado) }}</div><div class="label">Pregrado</div></div>
                       <div class="icon-wrap"><span class="material-icons">school</span></div>
                     </div>
                   </div>
@@ -1087,11 +1158,11 @@
               </div>
               
               <!-- Tarjeta 3: Postgrado -->
-              <div class="stat-card purple" :class="{'is-flipped': tarjetasVolteadas['oferta_postgrado']}" @click="toggleFlip('oferta_postgrado')">
+              <div class="stat-card purple" :class="{'is-flipped': tarjetasVolteadas['ofertaPostgrado']}" @click="toggleFlip('ofertaPostgrado')">
                 <div class="stat-card-inner">
                   <div class="stat-card-front">
                     <div class="top">
-                      <div><div class="value">{{ countByNivel('Postgrado') }}</div><div class="label">Postgrado</div></div>
+                      <div><div class="value">{{ fmtNum(carrerasPostgrado) }}</div><div class="label">Posgrado / Postítulo</div></div>
                       <div class="icon-wrap"><span class="material-icons">workspace_premium</span></div>
                     </div>
                   </div>
@@ -1102,9 +1173,9 @@
                   </div>
                 </div>
               </div>
-              
+
               <!-- Tarjeta 4: Vacantes Totales -->
-              <div class="stat-card success" :class="{'is-flipped': tarjetasVolteadas['oferta_vacantes']}" @click="toggleFlip('oferta_vacantes')">
+              <div class="stat-card success" :class="{'is-flipped': tarjetasVolteadas['ofertaVacantes']}" @click="toggleFlip('ofertaVacantes')">
                 <div class="stat-card-inner">
                   <div class="stat-card-front">
                     <div class="top">
@@ -1119,9 +1190,11 @@
                   </div>
                 </div>
               </div>
-              
+            </div>
+
+            <div class="stats-grid" style="margin-bottom: 2rem;">
               <!-- Tarjeta 5: Arancel Prom. -->
-              <div class="stat-card warning" :class="{'is-flipped': tarjetasVolteadas['oferta_arancel']}" @click="toggleFlip('oferta_arancel')">
+              <div class="stat-card warning" :class="{'is-flipped': tarjetasVolteadas['ofertaArancel']}" @click="toggleFlip('ofertaArancel')">
                 <div class="stat-card-inner">
                   <div class="stat-card-front">
                     <div class="top">
@@ -1136,6 +1209,11 @@
                   </div>
                 </div>
               </div>
+              
+              <!-- Dummy cards to prevent stretching on large screens -->
+              <div style="visibility: hidden; padding: 0; margin: 0; border: none; min-width: 0;"></div>
+              <div style="visibility: hidden; padding: 0; margin: 0; border: none; min-width: 0;"></div>
+              <div style="visibility: hidden; padding: 0; margin: 0; border: none; min-width: 0;"></div>
             </div>
 
             <div class="filters-bar">
@@ -1351,6 +1429,7 @@
     createApp({
       setup() {
         // Estado
+        const isSidebarOpen = ref(true);
         const datos = ref([]);
         const status = ref(null);
         const seccion = ref('resumen');
@@ -1359,6 +1438,7 @@
         const filtroUniversidad = ref('');
         const filtroNivel = ref('');
         const filtroVigencia = ref('');
+        const filtroTipoIES = ref('Universidades');
         const sortCol = ref('');
         const sortAsc = ref(true);
         const pagina = ref(1);
@@ -1578,17 +1658,21 @@
           let color = '#0077b6';
 
           // Asignar datos históricos del sparkline según la tarjeta
-          if (id === 'carreras' || id === 'unicas' || id === 'vacantes' || id === 'arancel' || id === 'ofertaProgramas' || id === 'ofertaVacantes' || id === 'ofertaArancel') {
+          if (id === 'carreras' || id === 'unicas' || id === 'vacantes' || id === 'arancel' || id === 'ofertaProgramas' || id === 'oferta_programas' || id === 'ofertaVacantes' || id === 'oferta_vacantes' || id === 'ofertaArancel' || id === 'oferta_arancel' || id === 'ofertaPregrado' || id === 'oferta_pregrado' || id === 'ofertaPostgrado' || id === 'oferta_postgrado') {
             const hist = historicoOferta.value;
             labels = hist.map(h => h.anio);
-            color = (id === 'carreras' || id === 'ofertaProgramas') ? '#0077b6' : 
+            color = (id === 'carreras' || id === 'ofertaProgramas' || id === 'oferta_programas') ? '#0077b6' : 
                     id === 'unicas' ? '#00b4d8' : 
-                    (id === 'vacantes' || id === 'ofertaVacantes') ? '#ffb703' : '#9c27b0';
+                    (id === 'vacantes' || id === 'ofertaVacantes' || id === 'oferta_vacantes') ? '#ffb703' : 
+                    (id === 'ofertaPregrado' || id === 'oferta_pregrado') ? '#00b4d8' :
+                    (id === 'ofertaPostgrado' || id === 'oferta_postgrado') ? '#9c27b0' : '#9c27b0';
             
-            if (id === 'carreras' || id === 'ofertaProgramas') dataPoints = hist.map(h => h.total_programas);
+            if (id === 'carreras' || id === 'ofertaProgramas' || id === 'oferta_programas') dataPoints = hist.map(h => h.total_programas);
             if (id === 'unicas') dataPoints = hist.map(h => h.carreras_unicas);
-            if (id === 'vacantes' || id === 'ofertaVacantes') dataPoints = hist.map(h => h.total_vacantes);
-            if (id === 'arancel' || id === 'ofertaArancel') dataPoints = hist.map(h => h.arancel_promedio);
+            if (id === 'vacantes' || id === 'ofertaVacantes' || id === 'oferta_vacantes') dataPoints = hist.map(h => h.total_vacantes);
+            if (id === 'arancel' || id === 'ofertaArancel' || id === 'oferta_arancel') dataPoints = hist.map(h => h.arancel_promedio);
+            if (id === 'ofertaPregrado' || id === 'oferta_pregrado') dataPoints = hist.map(h => h.programas_pregrado);
+            if (id === 'ofertaPostgrado' || id === 'oferta_postgrado') dataPoints = hist.map(h => h.programas_postgrado);
           } else if (id.startsWith('mat')) {
             const hist = historicoMatricula.value;
             labels = hist.map(h => h.anio);
@@ -1651,8 +1735,10 @@
         }
 
         function countByNivel(nivel) {
-          // Si estamos filtrando localmente sobre la página actual
-          return datos.value.filter(r => r['nivel_global'] === nivel).length;
+          if (nivel === 'Postgrado') {
+            return datos.value.filter(r => r['Nivel Global'] === 'Posgrado' || r['Nivel Global'] === 'Postítulo').length;
+          }
+          return datos.value.filter(r => r['Nivel Global'] === nivel).length;
         }
 
         // Year over year calculations
@@ -1792,6 +1878,7 @@
             if (filtroUniversidad.value) params.append("nombre_ies", filtroUniversidad.value);
             if (filtroNivel.value) params.append("nivel_global", filtroNivel.value);
             if (filtroVigencia.value) params.append("vigencia", filtroVigencia.value);
+            if (filtroTipoIES.value) params.append("tipo_ies", filtroTipoIES.value);
             
             if (busqueda.value.trim()) {
               params.append("busqueda", busqueda.value.trim());
@@ -2059,8 +2146,10 @@
         }
 
         return {
+          isSidebarOpen,
           datos, status, seccion, seccionTitulo, fechaActual,
-          busqueda, filtroAnio, filtroUniversidad, filtroNivel, filtroVigencia,
+          busqueda, filtroAnio, filtroUniversidad, filtroNivel, filtroVigencia, filtroTipoIES,
+          cargarDatosAPI,
           sortCol, sortAsc, pagina, perPage,
           columnasVisibles, columnasBasicas,
           datosFiltrados, datosPaginados, datosTop100,

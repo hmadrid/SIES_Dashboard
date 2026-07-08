@@ -32,18 +32,12 @@ BigQuery (datos)  ←  Apps Script (api.gs)  ←  Navegador (Vue 3 + Chart.js)
 | **🎓 Titulación** | Placeholder (datos disponibles en carpeta Titulados) |
 | **💼 Empleabilidad** | Placeholder (datos disponibles en carpeta Empleabilidad) |
 
-### Stat Cards (Resumen)
-- Valor principal grande
-- Icono con fondo de color
-- Indicador de tendencia (% vs año anterior)
-- Barra superior con gradient de color
-- Efecto hover con elevación y sombra
-- Paleta: azul (#0077b6), cyan (#00b4d8), verde (#10b981), naranja (#f59e0b), púrpura (#9c27b0)
-
-### Stat Cards (Oferta)
-- Total programas, Pregrado, Postgrado, Vacantes Totales, Arancel Promedio
-- Iconos Material Design
-- Efectos hover
+### Stat Cards (Resumen y Oferta)
+- **Diseño Estricto de 4 Columnas**: Para evitar que las tarjetas se deformen (debido al ancho intrínseco de los `<canvas>` de Chart.js), la clase `.stats-grid` fuerza obligatoriamente 4 columnas exactas (`grid-template-columns: repeat(4, 1fr);`) en pantallas grandes (>1200px), y 2 en medianas.
+- **Grillas con Dummy Cards (Oferta)**: Puesto que la sección "Oferta" tiene 5 tarjetas, se separaron lógicamente en dos grillas. La primera contiene 4 tarjetas visibles, y la segunda contiene 1 tarjeta visible + 3 tarjetas "fantasma" (`visibility: hidden`). Esto crea un candado estructural que garantiza que todas las tarjetas, en todas las pestañas, mantengan idéntico ancho del 25% sin importar cómo `auto-fit` habría intentado estirarlas.
+- Valor principal grande, iconos con fondo de color y tendencia porcentual vs año anterior.
+- Barra superior con gradient de color y efecto hover con elevación 3D.
+- Paleta: azul (#0077b6), cyan (#00b4d8), verde (#10b981), naranja (#f59e0b), púrpura (#9c27b0).
 
 ### Filtros en Oferta
 - **Año**: todos los años disponibles (2010-2025)

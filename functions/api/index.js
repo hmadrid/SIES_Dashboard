@@ -104,6 +104,40 @@ export default async function (req) {
             return json({ anios, universidades: univs });
         }
 
+        // Endpoint para histórico agregado (sin límite de registros)
+        if (path.endsWith("/sies-historico")) {
+            const { rows } = await client.queryObject(`
+                SELECT año,
+                       COUNT(*)::numeric as total_programas,
+                       COUNT(DISTINCT nombre_carrera)::numeric as carreras_unicas,
+                       SUM(vacantes_semestre_uno)::numeric as total_vacantes,
+                       ROUND(AVG(arancel_anual) FILTER (WHERE arancel_anual > 0))::numeric as arancel_promedio,
+                       (COUNT(*) FILTER (WHERE nivel_global = 'Pregrado'))::numeric as carreras_pregrado,
+                       (COUNT(*) FILTER (WHERE nivel_global = 'Postgrado'))::numeric as carreras_postgrado
+                FROM oferta
+                WHERE año >= 2018 AND año <= 2026
+                GROUP BY año
+                ORDER BY año ASC
+            `);
+            return json(rows.map(h => ({
+                anio: Number(h.año),
+                total_programas: Number(h.total_programas),
+                carreras_unicas: Number(h.carreras_unicas),
+                total_vacantes: Number(h.total_vacantes),
+                arancel_promedio: Number(h.arancel_promedio),
+                carreras_pregrado: Number(h.carreras_pregrado),
+                carreras_postgrado: Number(h.carreras_postgrado)
+            })));
+        }
+
+        // Endpoint para cargar TODOS los datos de oferta (sin filtros, sin KPIs, sin paginación)
+        if (path.endsWith("/sies-oferta-todo")) {
+            const { rows: data } = await client.queryObject(
+                "SELECT * FROM oferta ORDER BY año DESC, nombre_ies ASC, nombre_carrera ASC"
+            );
+            return json({ data });
+        }
+
         // Carga de datos de la tabla Oferta (con filtros y paginación)
         if (path.endsWith("/sies-oferta")) {
             const limit = parseInt(url.searchParams.get("limit") || "25");
@@ -113,6 +147,7 @@ export default async function (req) {
             const univ = url.searchParams.get("nombre_ies");
             const nivel = url.searchParams.get("nivel_global");
             const vigencia = url.searchParams.get("vigencia");
+            const tipoIES = url.searchParams.get("tipo_ies");
             const busqueda = url.searchParams.get("busqueda");
             
             const orderCol = url.searchParams.get("orderCol") || "año";
@@ -143,6 +178,10 @@ export default async function (req) {
                 query += ` AND nombre_carrera ILIKE $${paramIdx++}`;
                 queryParams.push(`%${busqueda}%`);
             }
+            if (tipoIES) {
+                query += ` AND tipo_institucion_1 = $${paramIdx++}`;
+                queryParams.push(tipoIES);
+            }
 
             // Sanitizar columna de ordenación
             const validCols = ["año", "nombre_ies", "nombre_sede", "nombre_carrera", "nivel_global", "modalidad", "vacantes_semestre_uno", "arancel_anual", "vigencia"];
@@ -169,6 +208,10 @@ export default async function (req) {
             if (vigencia) {
                 queryKpisOferta += ` AND vigencia = $${paramIdxKpiOf++}`;
                 queryParamsKpiOf.push(vigencia);
+            }
+            if (tipoIES) {
+                queryKpisOferta += ` AND tipo_institucion_1 = $${paramIdxKpiOf++}`;
+                queryParamsKpiOf.push(tipoIES);
             }
 
             const { rows: kpisOfertaResult } = await client.queryObject(queryKpisOferta, queryParamsKpiOf);
@@ -209,6 +252,10 @@ export default async function (req) {
             if (nivel) {
                 queryHistOferta += ` AND nivel_global = $${paramIdxHist++}`;
                 queryParamsHist.push(nivel);
+            }
+            if (tipoIES) {
+                queryHistOferta += ` AND tipo_institucion_1 = $${paramIdxHist++}`;
+                queryParamsHist.push(tipoIES);
             }
             queryHistOferta += " GROUP BY año ORDER BY año ASC";
 
