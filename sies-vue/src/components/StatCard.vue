@@ -20,3 +20,8 @@ defineProps({
     </div>
   </div>
 </template>
+
+<style>
+.stat-card .value { font-size:1.6rem; font-weight:700; color:var(--text-primary); line-height:1.1 }
+.stat-card .label { font-size:0.78rem; color:var(--text-secondary); margin-top:0.2rem; font-weight:500 }
+</style>
