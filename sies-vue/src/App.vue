@@ -102,4 +102,13 @@ body { font-family:'Roboto',sans-serif; background:var(--bg-page); color:var(--t
 /* Section title */
 .section-title { font-size:1.1rem; font-weight:500; margin-bottom:1.25rem; display:flex; align-items:center; gap:0.75rem; color:var(--text-primary) }
 .section-title .material-icons { color:var(--primary) }
+
+@media (max-width: 768px) {
+  .main { margin-left:0 !important }
+  .sidebar { transform:translateX(-100%) }
+  .sidebar.mobile-open { transform:translateX(0) }
+  .topbar { padding:0.75rem 1rem }
+  .content { padding:1rem }
+  .stats-grid { grid-template-columns:1fr }
+}
 </style>
