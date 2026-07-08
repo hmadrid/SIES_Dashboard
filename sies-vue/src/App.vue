@@ -31,7 +31,11 @@ function cambiarSeccion(nueva) {
       <div class="content">
         <ResumenView v-if="seccion === 'resumen'" />
         <OfertaView v-if="seccion === 'oferta'" />
+        <div v-if="seccion === 'matricula'" class="placeholder"><span class="material-icons big">people</span><h3>Matrícula</h3><p>Próximamente</p></div>
+        <div v-if="seccion === 'titulacion'" class="placeholder"><span class="material-icons big">school</span><h3>Titulación</h3><p>Próximamente</p></div>
+        <div v-if="seccion === 'empleabilidad'" class="placeholder"><span class="material-icons big">work</span><h3>Empleabilidad</h3><p>Próximamente</p></div>
       </div>
+      <div class="footer">100% gratis — InsForge + Vue 3 + Vite · Datos SIES · Mineduc Chile</div>
     </main>
   </div>
 </template>

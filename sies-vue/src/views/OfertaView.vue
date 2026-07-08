@@ -169,7 +169,7 @@ function updateCharts() {
 .ies-tab:hover { color:var(--primary); background:var(--accent-light) }
 .ies-tab.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600 }
 .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1.25rem; margin-bottom:1.5rem }
-.stat-card { background:var(--card-bg); border-radius:16px; padding:1.5rem 1.75rem; box-shadow:var(--shadow); max-width:250px; border:1px solid rgba(0,119,182,.08); display:flex; flex-direction:column; justify-content:center }
+.stat-card { background:var(--card-bg); border-radius:16px; padding:1.5rem 1.75rem; box-shadow:0 4px 20px rgba(0,119,182,.15),0 2px 8px rgba(0,0,0,.08); border:1px solid rgba(0,119,182,.08); display:flex; flex-direction:column; justify-content:center; position:relative; overflow:hidden; transition:all 0.3s }
 .stat-card .top { display:flex; justify-content:space-between; align-items:flex-start }
 .stat-card .value { font-size:1.6rem; font-weight:700; color:var(--text-primary) }
 .stat-card .label { font-size:0.78rem; color:var(--text-secondary); margin-top:0.2rem; font-weight:500 }
