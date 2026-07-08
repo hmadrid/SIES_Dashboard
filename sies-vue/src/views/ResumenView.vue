@@ -1,10 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useAPI } from '../composables/useAPI.js'
+import { onMounted } from 'vue'
+import { useSIESStore } from '../stores/sies.js'
+import StatCard from '../components/StatCard.vue'
 
-const { datos, status, kpis, cargarDatos, cargarFiltros } = useAPI()
-const listaAnios = ref([])
-const filtroAnio = ref('')
+const store = useSIESStore()
 
 function fmtNum(n) { return n?.toLocaleString('es-CL') || '0' }
 function fmtPesos(n) {
@@ -14,37 +13,32 @@ function fmtPesos(n) {
 }
 
 onMounted(async () => {
-  const f = await cargarFiltros()
-  listaAnios.value = f.anios
-  if (listaAnios.value.length) filtroAnio.value = listaAnios.value[0]
-  await cargarDatos({ limit: 25, anio: filtroAnio.value })
+  if (!store.listaAnios.length) await store.cargarFiltros()
+  await store.cargarDatos()
 })
 </script>
 
 <template>
   <div>
-    <div v-if="status" class="status" :class="status.type">
-      <span class="material-icons">{{ status.type === 'loading' ? 'hourglass_empty' : status.type === 'error' ? 'error' : 'check_circle' }}</span>
-      {{ status.msg }}
+    <div v-if="store.status" class="status" :class="store.status.type">
+      <span class="material-icons">{{ store.status.type === 'loading' ? 'hourglass_empty' : store.status.type === 'error' ? 'error' : 'check_circle' }}</span>
+      {{ store.status.msg }}
     </div>
 
     <div class="section-title"><span class="material-icons">account_balance</span> Oferta de Sistema Universitario</div>
     <div class="stats-grid">
-      <div class="stat-card primary"><div class="top"><div><div class="value">{{ fmtNum(kpis.carreras_unicas) }}</div><div class="label">Carreras Únicas</div></div><div class="icon-wrap"><span class="material-icons">menu_book</span></div></div></div>
-      <div class="stat-card info"><div class="top"><div><div class="value">{{ fmtNum(kpis.total_carreras) }}</div><div class="label">Programas por Nivel</div></div><div class="icon-wrap"><span class="material-icons">layers</span></div></div></div>
-      <div class="stat-card warning"><div class="top"><div><div class="value">{{ fmtNum(kpis.total_vacantes) }}</div><div class="label">Vacantes Totales</div></div><div class="icon-wrap"><span class="material-icons">event_seat</span></div></div></div>
-      <div class="stat-card purple"><div class="top"><div><div class="value">{{ fmtPesos(kpis.arancel_promedio) }}</div><div class="label">Arancel Promedio</div></div><div class="icon-wrap"><span class="material-icons">payments</span></div></div></div>
+      <StatCard :value="fmtNum(store.kpis.carreras_unicas)" label="Carreras Únicas" icon="menu_book" color="primary" />
+      <StatCard :value="fmtNum(store.kpis.total_carreras)" label="Programas por Nivel" icon="layers" color="info" />
+      <StatCard :value="fmtNum(store.kpis.total_vacantes)" label="Vacantes Totales" icon="event_seat" color="warning" />
+      <StatCard :value="fmtPesos(store.kpis.arancel_promedio)" label="Arancel Promedio" icon="payments" color="purple" />
     </div>
 
     <div class="section-title" style="margin-top:2rem"><span class="material-icons">people</span> Matrícula Histórica (SIES)</div>
     <div class="stats-grid">
-      <div class="stat-card primary"><div class="top"><div><div class="value">{{ fmtNum(kpis.mat_total) }}</div><div class="label">Matrícula Total</div></div><div class="icon-wrap"><span class="material-icons">people</span></div></div></div>
-      <div class="stat-card info"><div class="top"><div><div class="value">{{ fmtNum(kpis.mat_nueva) }}</div><div class="label">Matrícula Nueva</div></div><div class="icon-wrap"><span class="material-icons">person_add</span></div></div></div>
-      <div class="stat-card success"><div class="top"><div><div class="value">{{ fmtNum(kpis.mat_mujeres) }}</div><div class="label">Matrícula Mujeres</div></div><div class="icon-wrap"><span class="material-icons">female</span></div></div></div>
-      <div class="stat-card warning"><div class="top"><div><div class="value">{{ fmtNum(kpis.mat_hombres) }}</div><div class="label">Matrícula Hombres</div></div><div class="icon-wrap"><span class="material-icons">male</span></div></div></div>
+      <StatCard :value="fmtNum(store.kpis.mat_total)" label="Matrícula Total" icon="people" color="primary" />
+      <StatCard :value="fmtNum(store.kpis.mat_nueva)" label="Matrícula Nueva" icon="person_add" color="info" />
+      <StatCard :value="fmtNum(store.kpis.mat_mujeres)" label="Matrícula Mujeres" icon="female" color="success" />
+      <StatCard :value="fmtNum(store.kpis.mat_hombres)" label="Matrícula Hombres" icon="male" color="warning" />
     </div>
   </div>
 </template>
-
-<style scoped>
-</style>

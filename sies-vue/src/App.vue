@@ -1,27 +1,27 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
-import ResumenView from './views/ResumenView.vue'
-import OfertaView from './views/OfertaView.vue'
 
-const seccion = ref('resumen')
+const route = useRoute()
 const isSidebarOpen = ref(true)
 
-function cambiarSeccion(nueva) {
-  seccion.value = nueva
-}
+const titulo = computed(() => {
+  const t = { '/resumen': 'Sistema Universitario', '/oferta': 'Oferta Académica', '/matricula': 'Matrícula', '/titulacion': 'Titulación', '/empleabilidad': 'Empleabilidad' }
+  return t[route.path] || 'Dashboard'
+})
 </script>
 
 <template>
   <div class="layout">
-    <Sidebar :seccion="seccion" :isOpen="isSidebarOpen" @cambiar="cambiarSeccion" />
+    <Sidebar :isOpen="isSidebarOpen" />
     <main class="main" :class="{ 'full-width': !isSidebarOpen }">
       <div class="topbar">
         <div style="display:flex;align-items:center;gap:0.75rem">
           <button @click="isSidebarOpen = !isSidebarOpen" class="menu-btn">
             <span class="material-icons">menu</span>
           </button>
-          <h1>{{ seccion === 'resumen' ? 'Sistema Universitario' : 'Oferta Académica' }}</h1>
+          <h1>{{ titulo }}</h1>
         </div>
         <div class="topbar-right">
           <span class="date">{{ new Date().toLocaleDateString('es-CL', { day:'numeric', month:'long', year:'numeric' }) }}</span>
@@ -29,11 +29,11 @@ function cambiarSeccion(nueva) {
         </div>
       </div>
       <div class="content">
-        <ResumenView v-if="seccion === 'resumen'" />
-        <OfertaView v-if="seccion === 'oferta'" />
-        <div v-if="seccion === 'matricula'" class="placeholder"><span class="material-icons big">people</span><h3>Matrícula</h3><p>Próximamente</p></div>
-        <div v-if="seccion === 'titulacion'" class="placeholder"><span class="material-icons big">school</span><h3>Titulación</h3><p>Próximamente</p></div>
-        <div v-if="seccion === 'empleabilidad'" class="placeholder"><span class="material-icons big">work</span><h3>Empleabilidad</h3><p>Próximamente</p></div>
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </div>
       <div class="footer">100% gratis — InsForge + Vue 3 + Vite · Datos SIES · Mineduc Chile</div>
     </main>
@@ -49,13 +49,12 @@ function cambiarSeccion(nueva) {
   --text-secondary: #64748b; --primary: #0077b6; --primary-light: #90e0ef;
   --primary-dark: #023e8a; --accent: #00b4d8; --accent-light: #caf0f8;
   --purple: #9c27b0; --green: #10b981; --orange: #f59e0b; --red: #ef4444;
-  --shadow: 0 4px 20px rgba(0,119,182,.15), 0 2px 8px rgba(0,0,0,.08);
 }
 * { margin:0; padding:0; box-sizing:border-box }
 body { font-family:'Roboto',sans-serif; background:var(--bg-page); color:var(--text-primary); min-height:100vh }
 .material-icons { font-family:'Material Icons'; font-weight:normal; font-style:normal; font-size:24px; line-height:1; letter-spacing:normal; text-transform:none; display:inline-block; white-space:nowrap; word-wrap:normal; direction:ltr }
 .layout { display:flex; min-height:100vh }
-.main { margin-left:260px; flex:1; transition:margin-left 0.3s ease; min-width:0; overflow-x:hidden }
+.main { margin-left:260px; flex:1; transition:margin-left 0.3s ease; min-width:0 }
 .main.full-width { margin-left:0 }
 .topbar { background:var(--card-bg); padding:1rem 2rem; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50; box-shadow:0 1px 3px rgba(0,0,0,.06) }
 .topbar h1 { font-size:1.4rem; font-weight:500 }
@@ -66,7 +65,9 @@ body { font-family:'Roboto',sans-serif; background:var(--bg-page); color:var(--t
 .content { padding:1.5rem 2rem }
 .footer { text-align:center; padding:2rem; font-size:0.8rem; color:var(--text-secondary) }
 
-/* Stats cards globales */
+.fade-enter-active, .fade-leave-active { transition:opacity 0.2s ease }
+.fade-enter-from, .fade-leave-to { opacity:0 }
+
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1.25rem; margin-bottom:1.5rem }
 .stat-card { background:var(--card-bg); border-radius:16px; padding:1.5rem 1.75rem; box-shadow:0 4px 20px rgba(0,119,182,.15),0 2px 8px rgba(0,0,0,.08); border:1px solid rgba(0,119,182,.08); display:flex; flex-direction:column; justify-content:center; position:relative; overflow:hidden; transition:all 0.3s }
 .stat-card::before { content:''; position:absolute; top:0; left:0; width:100%; height:4px }
@@ -86,27 +87,18 @@ body { font-family:'Roboto',sans-serif; background:var(--bg-page); color:var(--t
 .stat-card.info .icon-wrap { background:var(--accent-light); color:var(--accent) }
 .stat-card .icon-wrap .material-icons { font-size:22px }
 
-/* Placeholder */
-.placeholder { background:var(--card-bg); border-radius:12px; padding:4rem 2rem; text-align:center; box-shadow:0 4px 20px rgba(0,119,182,.15) }
-.placeholder .material-icons.big { font-size:4rem; color:#caf0f8; margin-bottom:1rem }
-.placeholder h3 { font-size:1.2rem; margin-bottom:0.5rem }
-.placeholder p { color:var(--text-secondary) }
-
-/* Status */
 .status { padding:0.85rem 1.25rem; border-radius:10px; margin-bottom:1.5rem; font-size:0.85rem; display:flex; align-items:center; gap:0.75rem }
 .status.loading { background:rgba(0,180,216,.1); color:var(--primary) }
 .status.error { background:rgba(239,68,68,.1); color:var(--red) }
 .status.success { background:rgba(16,185,129,.1); color:var(--green) }
 .status .material-icons { font-size:20px }
 
-/* Section title */
 .section-title { font-size:1.1rem; font-weight:500; margin-bottom:1.25rem; display:flex; align-items:center; gap:0.75rem; color:var(--text-primary) }
 .section-title .material-icons { color:var(--primary) }
 
-@media (max-width: 768px) {
+@media (max-width:768px) {
   .main { margin-left:0 !important }
   .sidebar { transform:translateX(-100%) }
-  .sidebar.mobile-open { transform:translateX(0) }
   .topbar { padding:0.75rem 1rem }
   .content { padding:1rem }
   .stats-grid { grid-template-columns:1fr }

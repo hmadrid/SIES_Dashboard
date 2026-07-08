@@ -1,6 +1,21 @@
 <script setup>
-defineProps({ seccion: String, isOpen: Boolean })
-defineEmits(['cambiar'])
+import { useRouter, useRoute } from 'vue-router'
+defineProps({ isOpen: Boolean })
+
+const router = useRouter()
+const route = useRoute()
+
+const items = [
+  { section: 'Análisis' },
+  { path: '/resumen', icon: 'dashboard', label: 'Resumen' },
+  { path: '/oferta', icon: 'menu_book', label: 'Oferta Académica' },
+  { section: 'Datos Complementarios' },
+  { path: '/matricula', icon: 'people', label: 'Matrícula' },
+  { path: '/titulacion', icon: 'school', label: 'Titulación' },
+  { path: '/empleabilidad', icon: 'work', label: 'Empleabilidad' },
+]
+
+function navigate(path) { if (path) router.push(path) }
 </script>
 
 <template>
@@ -15,23 +30,13 @@ defineEmits(['cambiar'])
       </div>
     </div>
     <nav class="sidebar-nav">
-      <div class="nav-section">Análisis</div>
-      <div class="nav-item" :class="{active:seccion==='resumen'}" @click="$emit('cambiar','resumen')">
-        <span class="material-icons">dashboard</span> <span>Resumen</span>
-      </div>
-      <div class="nav-item" :class="{active:seccion==='oferta'}" @click="$emit('cambiar','oferta')">
-        <span class="material-icons">menu_book</span> <span>Oferta Académica</span>
-      </div>
-      <div class="nav-section">Datos Complementarios</div>
-      <div class="nav-item" :class="{active:seccion==='matricula'}" @click="$emit('cambiar','matricula')">
-        <span class="material-icons">people</span> <span>Matrícula</span>
-      </div>
-      <div class="nav-item" :class="{active:seccion==='titulacion'}" @click="$emit('cambiar','titulacion')">
-        <span class="material-icons">school</span> <span>Titulación</span>
-      </div>
-      <div class="nav-item" :class="{active:seccion==='empleabilidad'}" @click="$emit('cambiar','empleabilidad')">
-        <span class="material-icons">work</span> <span>Empleabilidad</span>
-      </div>
+      <template v-for="(item, i) in items" :key="i">
+        <div v-if="item.section" class="nav-section">{{ item.section }}</div>
+        <div v-else class="nav-item" :class="{ active: route.path === item.path }" @click="navigate(item.path)">
+          <span class="material-icons">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </div>
+      </template>
     </nav>
     <div class="sidebar-footer">InsForge + Vue · $0 costo</div>
   </aside>
@@ -52,7 +57,7 @@ defineEmits(['cambiar'])
 .nav-section { font-size:0.65rem; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,.4); padding:1rem 1.5rem 0.5rem }
 .nav-item { display:flex; align-items:center; gap:1rem; padding:0.85rem 1.5rem; cursor:pointer; transition:all 0.2s; border-left:3px solid transparent; color:rgba(255,255,255,.75); font-size:0.9rem }
 .nav-item:hover { background:rgba(255,255,255,.08); color:#fff }
-.nav-item.active { background:rgba(0,119,182,.25); border-left-color:var(--accent,#00b4d8); color:#fff }
+.nav-item.active { background:rgba(0,119,182,.25); border-left-color:#00b4d8; color:#fff }
 .nav-item .material-icons { font-size:20px; opacity:0.8 }
 .nav-item.active .material-icons { opacity:1 }
 .sidebar-footer { padding:1rem 1.5rem; border-top:1px solid rgba(255,255,255,.1); font-size:0.7rem; opacity:0.5; text-align:center }

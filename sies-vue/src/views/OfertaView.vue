@@ -1,33 +1,10 @@
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import { useAPI } from '../composables/useAPI.js'
+import { onMounted, watch, nextTick } from 'vue'
+import { useSIESStore } from '../stores/sies.js'
+import StatCard from '../components/StatCard.vue'
 import Chart from 'chart.js/auto'
 
-const { datos, status, totalRegistros, kpis, cargarDatos, cargarFiltros } = useAPI()
-
-const filtroAnio = ref('')
-const filtroUniversidad = ref('')
-const filtroNivel = ref('')
-const filtroVigencia = ref('')
-const filtroTipoIES = ref('')
-const busqueda = ref('')
-const pagina = ref(1)
-const perPage = 25
-const sortCol = ref('')
-const sortAsc = ref(true)
-
-const listaAnios = ref([])
-const universidades = ref([])
-const chartsVisible = ref(false)
-
-const totalPaginas = computed(() => Math.max(1, Math.ceil(totalRegistros.value / perPage)))
-
-const iesTabs = [
-  { label: 'Todos', value: '' },
-  { label: 'Universidades', value: 'Universidades' },
-  { label: 'Institutos', value: 'Institutos Profesionales' },
-  { label: 'CFT', value: 'Centros de Formación Técnica' }
-]
+const store = useSIESStore()
 
 function fmtNum(n) { return n?.toLocaleString('es-CL') || '0' }
 function fmtPesos(n) {
@@ -36,39 +13,17 @@ function fmtPesos(n) {
   return '$' + n.toLocaleString('es-CL')
 }
 
-async function cargar() {
-  await cargarDatos({
-    limit: perPage, offset: (pagina.value - 1) * perPage,
-    anio: filtroAnio.value, universidad: filtroUniversidad.value,
-    nivel: filtroNivel.value, vigencia: filtroVigencia.value,
-    tipoIES: filtroTipoIES.value, busqueda: busqueda.value.trim(),
-    orderCol: sortCol.value || undefined, orderDir: sortAsc.value ? 'asc' : 'desc'
-  })
-  chartsVisible.value = true
-  nextTick(() => updateCharts())
-}
-
-watch([filtroAnio, filtroUniversidad, filtroNivel, filtroVigencia, filtroTipoIES, pagina, sortCol, sortAsc], cargar)
-
-let searchTimeout
-watch(busqueda, () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => { pagina.value = 1; cargar() }, 350)
-})
-
-onMounted(async () => {
-  const f = await cargarFiltros()
-  listaAnios.value = f.anios
-  universidades.value = f.universidades
-  if (listaAnios.value.length) filtroAnio.value = listaAnios.value[0]
-  await cargar()
-})
+const iesTabs = [
+  { label: 'Todos', value: '' },
+  { label: 'Universidades', value: 'Universidades' },
+  { label: 'Institutos', value: 'Institutos Profesionales' },
+  { label: 'CFT', value: 'Centros de Formación Técnica' }
+]
 
 let chartVacantes = null, chartArancel = null
 
 function updateCharts() {
-  const k = kpis.value
-  // Vacantes Presencial vs Online
+  const k = store.kpis
   const c1 = document.getElementById('chart-vacantes')
   if (c1) {
     if (chartVacantes) chartVacantes.destroy()
@@ -81,7 +36,6 @@ function updateCharts() {
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
     })
   }
-  // Evolución Aranceles
   const c2 = document.getElementById('chart-aranceles')
   if (c2 && k.historico_oferta?.length) {
     if (chartArancel) chartArancel.destroy()
@@ -95,66 +49,77 @@ function updateCharts() {
     })
   }
 }
+
+let searchTimeout
+watch(() => store.busqueda, () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => { store.pagina = 1; store.cargarDatos() }, 350)
+})
+
+watch([() => store.filtroAnio, () => store.filtroUniversidad, () => store.filtroNivel, () => store.filtroVigencia, () => store.filtroTipoIES, () => store.pagina, () => store.sortCol, () => store.sortAsc], () => {
+  store.cargarDatos().then(() => nextTick(updateCharts))
+})
+
+onMounted(async () => {
+  if (!store.listaAnios.length) await store.cargarFiltros()
+  await store.cargarDatos()
+  nextTick(updateCharts)
+})
 </script>
 
 <template>
   <div>
-    <div v-if="status" class="status" :class="status.type">
-      <span class="material-icons">{{ status.type === 'loading' ? 'hourglass_empty' : status.type === 'error' ? 'error' : 'check_circle' }}</span>
-      {{ status.msg }}
+    <div v-if="store.status" class="status" :class="store.status.type">
+      <span class="material-icons">{{ store.status.type === 'loading' ? 'hourglass_empty' : store.status.type === 'error' ? 'error' : 'check_circle' }}</span>
+      {{ store.status.msg }}
     </div>
 
     <div class="section-title"><span class="material-icons">menu_book</span> Oferta Académica</div>
 
-    <!-- Sub-tabs tipo IES -->
     <div class="ies-tabs">
-      <div v-for="tab in iesTabs" :key="tab.value" class="ies-tab" :class="{active: filtroTipoIES === tab.value}" @click="filtroTipoIES = tab.value">
+      <div v-for="tab in iesTabs" :key="tab.value" class="ies-tab" :class="{active: store.filtroTipoIES === tab.value}" @click="store.filtroTipoIES = tab.value">
         {{ tab.label }}
       </div>
     </div>
 
-    <!-- KPIs -->
     <div class="stats-grid">
-      <div class="stat-card primary"><div class="top"><div><div class="value">{{ fmtNum(kpis.total_carreras) }}</div><div class="label">Total Programas</div></div><div class="icon-wrap"><span class="material-icons">menu_book</span></div></div></div>
-      <div class="stat-card info"><div class="top"><div><div class="value">{{ fmtNum(kpis.carreras_pregrado) }}</div><div class="label">Pregrado</div></div><div class="icon-wrap"><span class="material-icons">school</span></div></div></div>
-      <div class="stat-card purple"><div class="top"><div><div class="value">{{ fmtNum(kpis.carreras_postgrado) }}</div><div class="label">Postgrado</div></div><div class="icon-wrap"><span class="material-icons">workspace_premium</span></div></div></div>
-      <div class="stat-card success"><div class="top"><div><div class="value">{{ fmtNum(kpis.total_vacantes) }}</div><div class="label">Vacantes Totales</div></div><div class="icon-wrap"><span class="material-icons">event_seat</span></div></div></div>
-      <div class="stat-card warning"><div class="top"><div><div class="value">{{ fmtPesos(kpis.arancel_promedio) }}</div><div class="label">Arancel Prom.</div></div><div class="icon-wrap"><span class="material-icons">payments</span></div></div></div>
+      <StatCard :value="fmtNum(store.kpis.total_carreras)" label="Total Programas" icon="menu_book" color="primary" />
+      <StatCard :value="fmtNum(store.kpis.carreras_pregrado)" label="Pregrado" icon="school" color="info" />
+      <StatCard :value="fmtNum(store.kpis.carreras_postgrado)" label="Postgrado" icon="workspace_premium" color="purple" />
+      <StatCard :value="fmtNum(store.kpis.total_vacantes)" label="Vacantes Totales" icon="event_seat" color="success" />
+      <StatCard :value="fmtPesos(store.kpis.arancel_promedio)" label="Arancel Prom." icon="payments" color="warning" />
     </div>
 
-    <!-- Filtros -->
     <div class="filters-bar">
-      <select v-model="filtroAnio"><option v-for="a in listaAnios" :key="a" :value="a">{{ a }}</option></select>
-      <select v-model="filtroUniversidad"><option value="">Todas</option><option v-for="u in universidades" :key="u" :value="u">{{ u }}</option></select>
-      <select v-model="filtroNivel"><option value="">Todos</option><option value="Pregrado">Pregrado</option><option value="Postgrado">Postgrado</option></select>
-      <input type="text" v-model="busqueda" placeholder="Buscar carrera...">
+      <select v-model="store.filtroAnio"><option v-for="a in store.listaAnios" :key="a" :value="a">{{ a }}</option></select>
+      <select v-model="store.filtroUniversidad"><option value="">Todas</option><option v-for="u in store.universidades" :key="u" :value="u">{{ u }}</option></select>
+      <select v-model="store.filtroNivel"><option value="">Todos</option><option value="Pregrado">Pregrado</option><option value="Postgrado">Postgrado</option></select>
+      <input type="text" v-model="store.busqueda" placeholder="Buscar carrera...">
     </div>
 
-    <!-- Charts -->
-    <div class="charts-grid" v-if="chartsVisible">
+    <div class="charts-grid">
       <div class="chart-card"><div class="header"><h3>Vacantes: Presencial vs Online</h3></div><canvas id="chart-vacantes"></canvas></div>
       <div class="chart-card"><div class="header"><h3>Evolución Aranceles</h3></div><canvas id="chart-aranceles"></canvas></div>
     </div>
 
-    <!-- Tabla -->
     <div class="table-card">
-      <div class="header"><h3>Registros</h3><span class="count">{{ datos.length }} de {{ totalRegistros }}</span></div>
+      <div class="header"><h3>Registros</h3><span class="count">{{ store.datos.length }} de {{ store.totalRegistros }}</span></div>
       <div class="table-wrapper">
         <table>
           <thead><tr><th>Año</th><th>Nombre IES</th><th>Nombre Carrera</th><th>Nivel</th><th>Vacantes</th><th>Arancel</th></tr></thead>
           <tbody>
-            <tr v-for="(r,i) in datos" :key="i">
-              <td>{{ r['Año'] }}</td><td>{{ r['Nombre IES'] }}</td><td>{{ r['Nombre Carrera'] }}</td>
+            <tr v-for="(r,i) in store.datos" :key="i">
+              <td>{{ r.Año }}</td><td>{{ r['Nombre IES'] }}</td><td>{{ r['Nombre Carrera'] }}</td>
               <td>{{ r['Nivel Global'] }}</td><td>{{ fmtNum(r['Vacantes Semestre Uno']) }}</td><td>{{ fmtPesos(r['Arancel Anual']) }}</td>
             </tr>
           </tbody>
         </table>
       </div>
       <div class="pagination">
-        <span>Pág {{ pagina }} de {{ totalPaginas }}</span>
+        <span>Pág {{ store.pagina }} de {{ store.totalPaginas }}</span>
         <div class="pagination-btns">
-          <button class="btn btn-outline" @click="pagina--" :disabled="pagina <= 1">← Anterior</button>
-          <button class="btn btn-outline" @click="pagina++" :disabled="pagina >= totalPaginas">Siguiente →</button>
+          <button class="btn btn-outline" @click="store.pagina--" :disabled="store.pagina <= 1">← Anterior</button>
+          <button class="btn btn-outline" @click="store.pagina++" :disabled="store.pagina >= store.totalPaginas">Siguiente →</button>
         </div>
       </div>
     </div>
