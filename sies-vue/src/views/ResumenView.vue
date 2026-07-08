@@ -72,6 +72,3 @@ onMounted(async () => {
 .status.error { background:rgba(239,68,68,.1); color:var(--red) }
 .status.success { background:rgba(16,185,129,.1); color:var(--green) }
 </style>
-.status.error { background:rgba(239,68,68,.1); color:var(--red) }
-.status.success { background:rgba(16,185,129,.1); color:var(--green) }
-</style>
